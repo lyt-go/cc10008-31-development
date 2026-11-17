@@ -1,4 +1,4 @@
-import type { EntryRow } from './types'
+import type { EntryRow, ReviewHitInput } from './types'
 
 // 示例数据：首次打开时播种，之后浏览器里的改动优先，重置才会回到这份。
 export const SEED_ROWS: Record<string, EntryRow[]> = {
@@ -442,6 +442,115 @@ export const SEED_ROWS: Record<string, EntryRow[]> = {
       "误报率": "异常检测样例3"
     }
   ],
+  "review": [
+    {
+      "id": 1,
+      "status": "待复核",
+      "pending": true,
+      "abnormal": true,
+      "复核编号": "AREV-0001",
+      "异常对象": "ABO-0001",
+      "异常行为": "支付页短时连续重试触发的异常下单行为",
+      "标签规则编号": "ACTI-0003",
+      "检测器编号": "ANOM-0003",
+      "规则生效时间": "2026-10-18 09:00",
+      "异常检测时间": "2026-10-20 14:32",
+      "仲裁边界": "规则生效时间",
+      "待复核结论": "待人工复核",
+      "归属冲突标记": "否",
+      "证据保留": "标签规则命中:ACTI-0003/REQ-T-0003；检测器结果:ANOM-0003/REQ-D-0003",
+      "命中来源": [
+        {
+          "sourceType": "tag_rule",
+          "sourceCode": "ACTI-0003",
+          "sourceName": "行动标签样例3",
+          "requestCode": "REQ-T-0003",
+          "ruleEffectiveTime": "2026-10-18 09:00",
+          "detectedTime": "",
+          "conflicted": false,
+          "note": "双端归并：与既有检测器结果来源合并为同一待复核项"
+        },
+        {
+          "sourceType": "detector",
+          "sourceCode": "ANOM-0003",
+          "sourceName": "异常检测样例3",
+          "requestCode": "REQ-D-0003",
+          "ruleEffectiveTime": "",
+          "detectedTime": "2026-10-20 14:32",
+          "conflicted": false,
+          "note": "双端归并：与既有标签规则命中来源合并为同一待复核项"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "status": "待复核",
+      "pending": true,
+      "abnormal": true,
+      "复核编号": "AREV-0002",
+      "异常对象": "ABO-0002",
+      "异常行为": "同一设备批量注册账号的撞库行为",
+      "标签规则编号": "ACTI-0001、ACTI-0002",
+      "检测器编号": "—",
+      "规则生效时间": "2026-10-12 09:00",
+      "异常检测时间": "—",
+      "仲裁边界": "规则生效时间",
+      "待复核结论": "待人工复核",
+      "归属冲突标记": "是",
+      "证据保留": "标签规则命中:ACTI-0001/REQ-T-0011；标签规则命中:ACTI-0002/REQ-T-0012",
+      "命中来源": [
+        {
+          "sourceType": "tag_rule",
+          "sourceCode": "ACTI-0001",
+          "sourceName": "行动标签样例1",
+          "requestCode": "REQ-T-0011",
+          "ruleEffectiveTime": "2026-10-15 09:00",
+          "detectedTime": "",
+          "conflicted": false,
+          "note": ""
+        },
+        {
+          "sourceType": "tag_rule",
+          "sourceCode": "ACTI-0002",
+          "sourceName": "行动标签样例2",
+          "requestCode": "REQ-T-0012",
+          "ruleEffectiveTime": "2026-10-12 09:00",
+          "detectedTime": "",
+          "conflicted": true,
+          "note": "归属冲突：标签规则命中已归属该异常对象的待复核项，请求REQ-T-0012不另立项，检测证据并入保留"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "status": "待复核",
+      "pending": true,
+      "abnormal": true,
+      "复核编号": "AREV-0003",
+      "异常对象": "ABO-0003",
+      "异常行为": "凌晨时段接口调用量突增的离群行为",
+      "标签规则编号": "—",
+      "检测器编号": "ANOM-0002",
+      "规则生效时间": "—",
+      "异常检测时间": "2026-10-22 02:15",
+      "仲裁边界": "规则生效时间",
+      "待复核结论": "待人工复核",
+      "归属冲突标记": "否",
+      "证据保留": "检测器结果:ANOM-0002/REQ-D-0021",
+      "命中来源": [
+        {
+          "sourceType": "detector",
+          "sourceCode": "ANOM-0002",
+          "sourceName": "异常检测样例2",
+          "requestCode": "REQ-D-0021",
+          "ruleEffectiveTime": "",
+          "detectedTime": "2026-10-22 02:15",
+          "conflicted": false,
+          "note": ""
+        }
+      ]
+    }
+  ],
   "cohortcmp": [
     {
       "id": 1,
@@ -795,3 +904,85 @@ export const SEED_ROWS: Record<string, EntryRow[]> = {
     }
   ],
 }
+
+// 两个业务面（行动标签 / 异常检测）在「标签异常联动」入口共用的跨模块数据流：
+// 待处理的原始命中请求池。复核清单由它与既有清单归并生成，重复请求与归属冲突都在这里被仲裁。
+export const SEED_REVIEW_EVIDENCE_POOL: ReviewHitInput[] = [
+  {
+    requestCode: "REQ-T-0003",
+    anomalyObject: "ABO-0001",
+    anomalyBehavior: "支付页短时连续重试触发的异常下单行为",
+    sourceType: "tag_rule",
+    sourceCode: "ACTI-0003",
+    sourceName: "行动标签样例3",
+    ruleEffectiveTime: "2026-10-18 09:00",
+    detectedTime: "",
+    evidence: "标签规则 ACTI-0003 命中：支付事件 5 分钟内重试 6 次，超过频率阈值",
+  },
+  {
+    requestCode: "REQ-D-0003",
+    anomalyObject: "ABO-0001",
+    anomalyBehavior: "支付页短时连续重试触发的异常下单行为",
+    sourceType: "detector",
+    sourceCode: "ANOM-0003",
+    sourceName: "异常检测样例3",
+    ruleEffectiveTime: "",
+    detectedTime: "2026-10-20 14:32",
+    evidence: "检测器 ANOM-0003 捕获：支付成功率跌破 3σ 下界，离群分值 0.93",
+  },
+  {
+    requestCode: "REQ-T-0011",
+    anomalyObject: "ABO-0002",
+    anomalyBehavior: "同一设备批量注册账号的撞库行为",
+    sourceType: "tag_rule",
+    sourceCode: "ACTI-0001",
+    sourceName: "行动标签样例1",
+    ruleEffectiveTime: "2026-10-15 09:00",
+    detectedTime: "",
+    evidence: "标签规则 ACTI-0001 命中：单设备 10 分钟内注册 8 个账号",
+  },
+  {
+    requestCode: "REQ-T-0012",
+    anomalyObject: "ABO-0002",
+    anomalyBehavior: "同一设备批量注册账号的撞库行为",
+    sourceType: "tag_rule",
+    sourceCode: "ACTI-0002",
+    sourceName: "行动标签样例2",
+    ruleEffectiveTime: "2026-10-12 09:00",
+    detectedTime: "",
+    evidence: "标签规则 ACTI-0002 命中：注册接口同设备指纹高频调用，证据并入既有待复核项",
+  },
+  {
+    requestCode: "REQ-D-0021",
+    anomalyObject: "ABO-0003",
+    anomalyBehavior: "凌晨时段接口调用量突增的离群行为",
+    sourceType: "detector",
+    sourceCode: "ANOM-0002",
+    sourceName: "异常检测样例2",
+    ruleEffectiveTime: "",
+    detectedTime: "2026-10-22 02:15",
+    evidence: "检测器 ANOM-0002 捕获：02:00-02:30 调用量较基线突增 4.7 倍",
+  },
+  {
+    requestCode: "REQ-T-0099",
+    anomalyObject: "ABO-0004",
+    anomalyBehavior: "优惠券批量领取的薅羊毛行为",
+    sourceType: "tag_rule",
+    sourceCode: "ACTI-0003",
+    sourceName: "行动标签样例3",
+    ruleEffectiveTime: "2026-10-18 09:00",
+    detectedTime: "",
+    evidence: "标签规则 ACTI-0003 命中：同一用户秒级连领 12 张同档优惠券",
+  },
+  {
+    requestCode: "REQ-T-0099",
+    anomalyObject: "ABO-0004",
+    anomalyBehavior: "优惠券批量领取的薅羊毛行为",
+    sourceType: "tag_rule",
+    sourceCode: "ACTI-0003",
+    sourceName: "行动标签样例3",
+    ruleEffectiveTime: "2026-10-18 09:00",
+    detectedTime: "",
+    evidence: "标签规则 ACTI-0003 命中：同一用户秒级连领 12 张同档优惠券（重复提交）",
+  },
+]
